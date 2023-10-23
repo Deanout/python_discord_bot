@@ -1,46 +1,60 @@
-import discord
-import responses
-from dotenv import load_dotenv
+import nextcord as discord
+from nextcord.ext import commands
 import os
+from dotenv import load_dotenv
+import responses  # Assuming you have a 'responses.py' file
+
+# Create a bot instance with intents
+intents = discord.Intents.default()
+intents.message_content = True
+bot = commands.Bot(intents=intents, command_prefix="/")
 
 
-async def send_message(message, user_message, is_private):
-    try:
-        response = responses.handle_response(user_message)
-        if is_private:
-            await message.author.send(response)
-        else:
-            await message.channel.send(response)
-    except Exception as e:
-        print(e)
-        await message.channel.send("Sorry, I don't understand you.")
+@bot.event
+async def on_ready():
+    print(f"{bot.user} has connected to Discord!")
+
+    # Register guild by the ID in the env file.
+    guild_id = int(os.getenv("DISCORD_GUILD_ID"))
+    guild = bot.get_guild(guild_id)
+    print(f"Connected to guild: {guild.name} (id: {guild.id})")
 
 
+@bot.event
+async def on_message(message):
+    if message.author == bot.user:
+        return
+
+    is_private = not message.guild  # Checks if the message is from a guild or not
+
+    if is_private:
+        await message.channel.send(responses.handle_response(message.content))
+    elif message.content.startswith("/"):
+        await bot.process_commands(message)
+
+
+@bot.slash_command(
+    name="hello",
+    description="Say hello!",
+    # Add your command options and settings here if needed
+)
+async def hello(interaction: discord.Interaction):
+    await interaction.send("Hello, World!")
+
+
+# Callback SlashApplicationCommand ping is missing the interaction parameter
+@bot.slash_command(
+    name="ping",
+    description="Ping the bot to see if it's alive.",
+    # Add your command options and settings here if needed
+)
+async def ping(interaction: discord.Interaction):
+    """Ping the bot to see if it's alive."""
+    await interaction.send("Pong!")
+
+
+# Function to run the Discord bot, which you'll call from main.py
 def run_discord_bot():
-    # Get the token from ../.env
-    load_dotenv()
-    token = os.getenv("DISCORD_TOKEN")
-    intents = discord.Intents.default()
-    intents.message_content = True
-    client = discord.Client(intents=intents)
-
-    guilds = []
-    for guild in client.guilds:
-        guilds.append(guild.name)
-    print(f"Connected to guilds: {guilds}")
-
-    @client.event
-    async def on_ready():
-        print(f"{client.user} has connected to Discord!")
-
-    @client.event
-    async def on_message(message):
-        if message.author == client.user:
-            return
-
-        if message.content.startswith("!"):
-            await send_message(message, message.content, False)
-        else:
-            await send_message(message, message.content, True)
-
-    client.run(token)
+    load_dotenv()  # Load environment variables from .env file
+    token = os.getenv("DISCORD_TOKEN")  # Get token from .env
+    bot.run(token)  # Run the bot
