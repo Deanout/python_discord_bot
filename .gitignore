@@ -1,3 +1,5 @@
 .env
 # Default Python Excludes gitignore
+__pycache__/
 app/__pycache__/
+app/cogs/__pycache__/
