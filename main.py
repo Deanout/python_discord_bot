@@ -1,14 +1,12 @@
-from app.discord_bot import DiscordBot
-from app.cogs.BasicCommand import BasicCommand
-import nextcord as discord
-import os
+from app.cogs.Help import MyHelpCommand
+from app.client import Client
 
 
 def main():
-    intents = discord.Intents.default()
-    intents.message_content = True
-    bot = DiscordBot(command_prefix="/", intents=intents)
-    bot.run_bot()
+    print("Starting bot...")
+    client = Client()
+    client.help_command = MyHelpCommand()
+    client.run(client.token)
 
 
 if __name__ == "__main__":
