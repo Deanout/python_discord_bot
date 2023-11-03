@@ -1,5 +1,3 @@
-# docker exec docker-mc-1 rcon-cli
-
 import discord
 from discord.ext import commands
 from discord import app_commands
@@ -13,6 +11,7 @@ import subprocess
 class Minecraft(commands.Cog):
     def __init__(self, client: commands.Bot):
         self.client = client
+        self.docker_compose_file_path = "./app/docker/docker-compose.yml"
 
     @app_commands.command(
         name="start_minecraft_server", description="Starts the Minecraft server!"
@@ -22,7 +21,7 @@ class Minecraft(commands.Cog):
         # Run docker-compose up -d on the host machine.
         # This will start the Minecraft server.
 
-        self.start_docker_compose_server("./app/assets/docker/docker-compose.yml")
+        self.start_docker_compose_server(self.docker_compose_file_path)
 
     @app_commands.command(
         name="stop_minecraft_server", description="Stops the Minecraft server!"
@@ -32,7 +31,7 @@ class Minecraft(commands.Cog):
         # Run docker-compose down on the host machine.
         # This will stop the Minecraft server.
 
-        self.stop_docker_compose_server("./app/assets/docker/docker-compose.yml")
+        self.stop_docker_compose_server(self.docker_compose_file_path)
 
     @app_commands.command(
         name="rcon_cli", description="Sends a command to the Minecraft server!"
@@ -53,11 +52,11 @@ class Minecraft(commands.Cog):
         await interaction.response.send_message(content="Restarting Minecraft server!")
         # Run docker-compose down on the host machine.
         # This will stop the Minecraft server.
-        self.stop_docker_compose_server("./app/assets/docker/docker-compose.yml")
+        self.stop_docker_compose_server(self.docker_compose_file_path)
 
         # Run docker-compose up -d on the host machine.
         # This will start the Minecraft server.
-        self.start_docker_compose_server("./app/assets/docker/docker-compose.yml")
+        self.start_docker_compose_server(self.docker_compose_file_path)
 
     @app_commands.command(
         name="minecraft_server_status",
@@ -70,22 +69,25 @@ class Minecraft(commands.Cog):
         # Run docker-compose ps on the host machine.
         # This will return the status of the Minecraft server.
         status = await self.check_docker_compose_server_status(
-            "./app/assets/docker/docker-compose.yml"
+            self.docker_compose_file_path
         )
         # Reply with the status of the Minecraft server.
         await interaction.followup.send(content=status)
 
+    # docker exec docker-mc-1 rcon-cli
     def run_docker_compose_command(self, service_name, command):
         # Command to be executed, for example 'docker-compose exec -T <service_name> <command>'
+        # Needs to be executed in the directory where the docker-compose.yml file is located.
         compose_command = [
             "docker-compose",
+            "-f",
+            self.docker_compose_file_path,
             "exec",
             "-T",
             service_name,
             "rcon-cli",
             command,
         ]
-
         # Running the docker-compose command
         process = subprocess.run(
             compose_command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True
