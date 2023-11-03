@@ -8,7 +8,8 @@ from dotenv import load_dotenv
 
 
 class Client(commands.Bot):
-    def __init__(self):
+    def __init__(self, db):
+        self.db = db
         intents = discord.Intents().default()
         intents.message_content = True
         super().__init__(
