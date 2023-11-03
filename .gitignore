@@ -3,3 +3,8 @@
 __pycache__/
 app/__pycache__/
 app/cogs/__pycache__/
+
+# You need to add modpacks yourself.
+app/assets/modpacks/
+app/assets/modpacks/**/*
+app/assets/modpacks/*
